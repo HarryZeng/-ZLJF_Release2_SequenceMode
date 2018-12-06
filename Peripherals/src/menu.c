@@ -767,17 +767,17 @@ void MenuTwo_OUT1_DelaySET(void)
 			}
 			/*从MenuTwo_OUT1_TOFF();到此，运行时间是2us*/
 			key_time++;
-			if(key_time % 500 == 0)					// 1,000/2 = 500  1ms
+			if(key_time % 300 == 0)					// 1,000/2 = 500  1ms
 			{
 				SMG_Diplay();  /*刷新数码管*/
 			}
-			if (key_time % 4000 == 0) // 8000/2 = 4000  8ms
+			if (key_time % 3000 == 0) // 8000/2 = 4000  8ms
 			{
 				Key_Scan(); //定时扫描按键
 				KeytempPress = 1;
 				IWDG_ReloadCounter();
 			}
-			if (key_time >= 250000)  // 500,000/2 = 250,000  500ms
+			if (key_time >= 120000)  // 500,000/2 = 250,000  500ms
 			{
 				EventFlag = EventFlag | Blink500msFlag;
 				key_time = 0;
@@ -831,17 +831,17 @@ void MenuTwo_OUT1_DelaySET(void)
 				if(ModeButton.PressCounter>=(TimerDisplayIndex+1)) break;
 			/*从MenuTwo_OUT1_ON_D();到此，运行时间是2us*/
 			key_time++;
-			if(key_time % 500 == 0)					// 1,000/2 = 500  1ms
+			if(key_time % 300 == 0)					// 1,000/2 = 500  1ms
 			{
 				SMG_Diplay();  /*刷新数码管*/
 			}
-			if (key_time % 4000 == 0) // 8000/2 = 4000  8ms
+			if (key_time % 3000 == 0) // 8000/2 = 4000  8ms
 			{
 				Key_Scan(); //定时扫描按键
 				KeytempPress = 1;
 				IWDG_ReloadCounter();
 			}
-			if (key_time >= 250000)  // 500,000/2 = 250,000  500ms
+			if (key_time >= 120000)  // 500,000/2 = 250,000  500ms
 			{
 				EventFlag = EventFlag | Blink500msFlag;
 				key_time = 0;
@@ -1188,7 +1188,7 @@ void MenuTwo_OUT1_ON_D(void)
 			/*从while(ModeButton.Effect==PressShort && ModeButton.PressCounter==TimerDisplayIndex)到此，运行时间是3.3us*/
 			//GPIOA->BRR = 0x00080;
 			key_time++;
-			if(key_time % 300 == 0)					// 1,000/3.3 = 333.33  1ms
+			if(key_time % 200 == 0)					// 1,000/3.3 = 333.33  1ms
 			{
 				SMG_Diplay();  /*刷新数码管*/
 			}
