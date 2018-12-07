@@ -94,22 +94,22 @@ void menu(void)
 					if(OUT1_Mode.DelayMode == TOFF)
 						DispalyNo = 0;
 					else if(OUT1_Mode.DelayMode == OFFD)
-						DispalyNo = 2;
+						DispalyNo = 3;
 					else if(OUT1_Mode.DelayMode == ON_D)
 						DispalyNo = 1;
 					else if(OUT1_Mode.DelayMode == SHOT)
-						DispalyNo = 3;
+						DispalyNo = 2;
 				}
 				while(ModeButton.Effect==PressShort && ModeButton.PressCounter==3)
 				{
 						MenuTwo_OUT1_DelaySET();
 				}
-				while(ModeButton.Effect==PressShort && ModeButton.PressCounter==5)
+				while(ModeButton.Effect==PressShort && ModeButton.PressCounter<=7 && ModeButton.PressCounter>=6)
 				{
 						END_Display();
 						DX_Flag = 1;
 						/*再短按MODE，则退出菜单*/
-						if(ModeButton.Effect==PressShort && ModeButton.PressCounter>=6) 
+						if(ModeButton.Effect==PressShort && ModeButton.PressCounter>=7) 
 						{
 							ModeButton.PressCounter = 0;
 							ModeButton.Status = Release;
@@ -749,7 +749,7 @@ void MenuTwo_OUT1_DelaySET(void)
 				lastCounter = UpButton.PressCounter;
 				UpButton.PressCounter = 0;
 				DispalyNo++;
-				if(DispalyNo>1)
+				if(DispalyNo>2)
 					DispalyNo = 0;
 			}
 			if(DownButton.PressCounter !=lastCounter && DownButton.Effect==PressShort)
@@ -758,11 +758,11 @@ void MenuTwo_OUT1_DelaySET(void)
 				DownButton.PressCounter = 0;
 				DispalyNo--;
 				if(DispalyNo<0)
-					DispalyNo = 1;
+					DispalyNo = 2;
 			}
 			if(ModeButton.PressCounter>=(TimerDisplayIndex)) 
 			{
-				ModeButton.PressCounter = (TimerDisplayIndex+1); //用于跳到END菜单
+				ModeButton.PressCounter = (TimerDisplayIndex+2); //用于跳到END菜单
 				break;
 			}
 			/*从MenuTwo_OUT1_TOFF();到此，运行时间是2us*/
@@ -785,7 +785,7 @@ void MenuTwo_OUT1_DelaySET(void)
 		}
 		
 		/*OFFD mode*/
-		//while(DispalyNo==1)
+		//while(DispalyNo==3)
 		while(0)
 		{
 				MenuTwo_OUT1_OFFD();
@@ -805,7 +805,7 @@ void MenuTwo_OUT1_DelaySET(void)
 					if(DispalyNo<0)
 						DispalyNo = 3;
 				}
-				if(ModeButton.PressCounter>=(TimerDisplayIndex+1)) break;
+				if(ModeButton.PressCounter>=(TimerDisplayIndex+2)) break;
 		}
 		/*ON_D mode*/
 		while(DispalyNo==1)
@@ -817,7 +817,7 @@ void MenuTwo_OUT1_DelaySET(void)
 					//lastCounter = UpButton.PressCounter;
 					UpButton.PressCounter = 0;
 					DispalyNo++;
-					if(DispalyNo>1)
+					if(DispalyNo>2)
 						DispalyNo = 0;
 				}
 				if(DownButton.PressCounter !=lastCounter && DownButton.Effect==PressShort)
@@ -826,9 +826,13 @@ void MenuTwo_OUT1_DelaySET(void)
 					DownButton.PressCounter = 0;
 					DispalyNo--;
 					if(DispalyNo<0)
-						DispalyNo = 1;
+						DispalyNo = 2;
 				}
-				if(ModeButton.PressCounter>=(TimerDisplayIndex+1)) break;
+				if(ModeButton.PressCounter>=(TimerDisplayIndex))
+				{
+					ModeButton.PressCounter = (TimerDisplayIndex+2); //用于跳到END菜单
+					break;
+				}
 			/*从MenuTwo_OUT1_ON_D();到此，运行时间是2us*/
 			key_time++;
 			if(key_time % 300 == 0)					// 1,000/2 = 500  1ms
@@ -847,8 +851,7 @@ void MenuTwo_OUT1_DelaySET(void)
 				key_time = 0;
 			}
 		}
-		//while(DispalyNo==3)
-		while(0)
+		while(DispalyNo==2)
 		{
 				MenuTwo_OUT1_SHOT();
 				if(UpButton.PressCounter !=lastCounter && UpButton.Effect==PressShort)
@@ -856,7 +859,7 @@ void MenuTwo_OUT1_DelaySET(void)
 					//lastCounter = UpButton.PressCounter;
 					UpButton.PressCounter = 0;
 					DispalyNo++;
-					if(DispalyNo>3)
+					if(DispalyNo>2)
 						DispalyNo = 0;
 				}
 				if(DownButton.PressCounter !=lastCounter && DownButton.Effect==PressShort)
@@ -865,9 +868,30 @@ void MenuTwo_OUT1_DelaySET(void)
 					DownButton.PressCounter = 0;
 					DispalyNo--;
 					if(DispalyNo<0)
-						DispalyNo = 3;
+						DispalyNo = 2;
 				}
-				if(ModeButton.PressCounter>=(TimerDisplayIndex+1)) break;
+				if(ModeButton.PressCounter>=(TimerDisplayIndex)) 
+				{
+					ModeButton.PressCounter = (TimerDisplayIndex+2); //用于跳到END菜单
+					break;
+				}
+				/*从MenuTwo_OUT1_ON_D();到此，运行时间是2us*/
+				key_time++;
+				if(key_time % 300 == 0)					// 1,000/2 = 500  1ms
+				{
+					SMG_Diplay();  /*刷新数码管*/
+				}
+				if (key_time % 3000 == 0) // 8000/2 = 4000  8ms
+				{
+					Key_Scan(); //定时扫描按键
+					KeytempPress = 1;
+					IWDG_ReloadCounter();
+				}
+				if (key_time >= 120000)  // 500,000/2 = 250,000  500ms
+				{
+					EventFlag = EventFlag | Blink500msFlag;
+					key_time = 0;
+				}
 		}
 		
 //		while(DispalyNo==4)
@@ -1226,6 +1250,7 @@ void MenuTwo_OUT1_SHOT(void)
 		/*短按MODE后，进入SHOT的设置子菜单*/
 		while(ModeButton.Effect==PressShort && ModeButton.PressCounter==TimerDisplayIndex)
 		{
+//			GPIOA->BSRR = 0x0080;
 			OUT1_Mode.DelayMode = SHOT;
 			/*显示SHOT value*/			
 			if(UpButton.Status==Release&&DownButton.Status==Release)
@@ -1348,6 +1373,25 @@ void MenuTwo_OUT1_SHOT(void)
 			else if(OUT1_Mode.DelayValue<=0)
 					OUT1_Mode.DelayValue = 0;
 
+			/*从while(ModeButton.Effect==PressShort && ModeButton.PressCounter==TimerDisplayIndex)到此，运行时间是3.3us*/
+			//GPIOA->BRR = 0x00080;
+			key_time++;
+			if(key_time % 200 == 0)					// 1,000/3.3 = 333.33  1ms
+			{
+				SMG_Diplay();  /*刷新数码管*/
+			}
+			if (key_time % 800 == 0) // 8000/3.3 = 2424.2424  8ms
+			{
+				Key_Scan(); //定时扫描按键
+				KeytempPress = 1;
+				IWDG_ReloadCounter();
+			}
+			if (key_time >= 150000)  // 500,000/3.3 = 151515.151515  500ms
+			{
+				EventFlag = EventFlag | Blink500msFlag;
+				key_time = 0;
+			}
+			
 		}
 }
 
@@ -1464,7 +1508,7 @@ void MenuTwo_DEL(void)
 	else if(DEL>=3000)
 			DEL =3000;
 	/*从SMG_DisplayMenuTwo_DEL_SET(DEL,0)到此，运行时间是9us*/
-	GPIOA->BSRR = 0x0080;
+	//GPIOA->BSRR = 0x0080;
 		key_time++;
 		if(key_time % 112 == 0)					// 1,000/9 = 111.111  1ms
 		{
