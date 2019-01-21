@@ -50,7 +50,8 @@ uint32_t ADCRawValue = 0;
 int32_t ADC_Display = 0;
 int32_t DACOUT1 = 1000;
 int32_t DACOUT2 = 1000;
-uint32_t CPV = 0;
+int32_t CPV = 0;
+uint32_t TotalCPV = 0;
 uint8_t PVD_Flag = 0;
 uint8_t KeyEnterFlag=0;
 Button_STATUS KEY = ULOC;
@@ -64,12 +65,14 @@ uint8_t ShortCircuit = 0;
 uint32_t ShortCircuitTimer = 0;
 uint8_t displayModeONE_FLAG = 0;
 uint8_t DisplayModeNo = 0;
+uint8_t DisplayCPVModeNo = 0;
 
 void SetRegisterA(uint32_t GetADCValue);
 void DisplayMODE(void);
 void DisplayModeONE(void);
 void DisplayModeTWO(void);
 void DisplayModeTHIRD(void);
+void DisplayModeTotalCPV(void);
 void DisplayModeFour(void);
 void ShortCircuitProtection(void);
 void SetOUT1Status(void);
@@ -87,7 +90,7 @@ uint8_t CheckDust(void);
 extern int8_t PERCENTAGE;
 extern int16_t ATT100;
 extern uint16_t FSV;
-extern int32_t SV;
+//extern int32_t SV;
 extern uint8_t SelftStudyflag;
 extern int8_t DSC;
 /*----------------------------------宏定义-------------------------------------*/
@@ -391,37 +394,34 @@ uint8_t REGISTER_AI_0 = 0;
 uint8_t REGISTER_AI_1 = 0;
 void SetRegisterAandOUT(void)
 {
+		uint8_t k=0;
+		uint8_t Counter=15;
+		REGISTER_AI_1 = 0;
+		REGISTER_AI_0= 0;
+		for(k=0;k<=Counter;k++,REGISTER_AI_0++,REGISTER_AI_1++)
+		{		
 			if (GPIO_ReadInputDataBit(COMP_OUT1_GPIO_Port, COMP_OUT1_Pin)) //运放为高，没物体通过
 			{
 				REGISTER_AI_1 = 0;
-				REGISTER_AI_0++;
-				if(REGISTER_AI_0>=10)
+				
+				if(REGISTER_AI_0>=Counter)
 				{
 					REGISTER_AI_0 = 0;
 					RegisterA = 0;
-					LastRegisterA = RegisterA;
 				}
 			}
 			else //运放为低，有物体通过
 			{
 				REGISTER_AI_0 = 0;
-				REGISTER_AI_1++;
-				if(REGISTER_AI_1>=10)
+				
+				if(REGISTER_AI_1>=Counter)
 				{
 					REGISTER_AI_1 = 0 ;
 					RegisterA = 1;
-					LastRegisterA = RegisterA;
 				}
 			}
-			if (LastRegisterA == 0 && RegisterA == 1)
-			{
-				CPV++;
-				if (CPV >= CSV) /*如果计数器达到预先设定的CSV，清零，OUT2输出一个高电平*/
-				{
-					OUT2 = 1;
-					CPV = 0;
-				}
-			}
+		}
+
 			/*设置OUT1的状态*/
 			SetOUT1Status();
 			/*OUT2输出*/
@@ -434,7 +434,7 @@ void SetRegisterAandOUT(void)
 uint32_t timenum;
 extern uint32_t KeytempPress;
 uint16_t DAC_OUTput=0;
-uint8_t testflag=0;
+uint8_t CPV_DispalyFlag = 0;
 void Main_Function(void)
 {
 	GetEEPROM();
@@ -452,9 +452,9 @@ void Main_Function(void)
 			//GPIOA->BSRR = 0x0080;
 			/**************************************/
 			/*判断RegisterA 和 输出 OUT*/
-			SetRegisterAandOUT();  //此函数运行时间消耗10us
+			SetRegisterAandOUT();  //此函数运行时间消耗20us
 			/*等待10us*/
-			delayus(10);
+			//delayus(10);
 			
 			/**************************************/
 			/*正常显示模式*/
@@ -470,7 +470,7 @@ void Main_Function(void)
 			}
 			//以上从delayus(10)开始，运行时间消耗12us
 			/*等待10us*/
-			delayus(8);
+			//delayus(8);
 			/**************************************/
 			//以上从while(1)开始，运行时间消耗40us
 			if(timenum % 3 == 0)						// 120/40 = 3  120us
@@ -494,7 +494,7 @@ void Main_Function(void)
 				EventFlag = EventFlag | Blink500msFlag;
 				timenum = 0;
 			}
-			//以上从while(1)开始，运行时间消耗43us
+			//以上从while(1)开始，运行时间消耗27us
 			//GPIOA->BRR = 0x00080;
 		}
 	}
@@ -513,13 +513,32 @@ void DisplayMODE(void)
 		{
 			if((KEY == LOC &&ModeButton.Status == Release && DownButton.Status == Release && UpButton.Status == Release)||KEY==ULOC)
 			{
-				DisplayModeTHIRD();
-				testflag = 1;
+				/***************选择*****************/
+				if (ModeButton.PressCounter == 0)
+				{
+					DisplayCPVModeNo = 0;
+				}
+				else if (ModeButton.Effect == PressShort && ModeButton.PressCounter == 1 && DownButton.Status == Release && UpButton.Status == Release)
+				{
+					DisplayCPVModeNo = 1;
+				}
+				else if (ModeButton.Effect == PressShort && ModeButton.PressCounter == 2 && DownButton.Status == Release && UpButton.Status == Release ) //if need to display Mode_Four,PressCounter=4
+				{
+					ModeButton.PressCounter = 0;
+				}				
+				/*****************显示****************/
+				if(DisplayCPVModeNo==0)
+				{
+					DisplayModeTHIRD();
+				}
+				else if(DisplayCPVModeNo==1)
+				{
+					DisplayModeTotalCPV();
+				}
 			}
 			else if (KEY == LOC && (ModeButton.Status == Press || DownButton.Status == Press || UpButton.Status == Press))
 			{
 				ButtonMappingDisplay(1);
-				testflag = 2;
 			}
 		}
 		else
@@ -933,6 +952,20 @@ void DisplayModeTHIRD(void)
 
 /*******************************
 *
+*显示模式4
+*
+*******************************/
+void DisplayModeTotalCPV(void)
+{
+	/*数码管显示*/
+	SMG_DisplayModeTotalCPV(TotalCPV);
+	/*以下为清楚按键计数，防止会影响到显示模式4*/
+	DownButton.PressCounter = 0;
+	UpButton.PressCounter = 0;
+}
+
+/*******************************
+*
 *Set RegisterA value
 *
 *******************************/
@@ -997,7 +1030,7 @@ void SetOUT1Status(void)
 				OUT1_Mode.DelayCounter = 0;
 			}
 		}
-		/*OFFD*/
+		/*ON_D*/
 		else if (OUT1_Mode.DelayMode == OFFD)
 		{
 			if (OUT1 == 0)
@@ -1015,8 +1048,8 @@ void SetOUT1Status(void)
 				}
 			}
 		}
-		/*ON_D*/
-		else if (OUT1_Mode.DelayMode == ON_D)
+		/*OFFD*/
+		else if (OUT1_Mode.DelayMode == ON_D)  //ZLJF版本，OFF与NO，是反了，这里才是OFF delay
 		{
 			if (OUT1 == 0)
 			{
@@ -1035,29 +1068,26 @@ void SetOUT1Status(void)
 		/*SHOT*/
 		else if (OUT1_Mode.DelayMode == SHOT)
 		{
-			if (OUT1 == 0 || SHOTflag == 1)
+			if (OUT1 == 0)
 			{
-				if (OUT1_Mode.DelayCounter < (OUT1_Mode.DelayValue * DealyBaseTime))
+				if (OUT1_Mode.DelayCounter > (OUT1_Mode.DelayValue * DealyBaseTime))
 				{
 					GPIO_WriteBit(OUT1_GPIO_Port, OUT1_Pin, Bit_RESET);
-					SHOTflag = 1;
-				}
-				else
-				{
-					GPIO_WriteBit(OUT1_GPIO_Port, OUT1_Pin, Bit_SET);
-					SHOTflag = 0;
+					CPV_Status = 1;
 				}
 			}
 			else
 			{
 				OUT1_Mode.DelayCounter = 0;
-				GPIO_WriteBit(OUT1_GPIO_Port, OUT1_Pin, Bit_RESET);
+				GPIO_WriteBit(OUT1_GPIO_Port, OUT1_Pin, Bit_SET);
 			}
 		}
 			if(LastOUT1 == 0 && OUT1 == 1 && CPV_Status == 1)
 			{
 				CPV++;
 				CPV_Status = 0;
+				TotalCPV++;
+				if(TotalCPV>=999999) TotalCPV = 0;
 				if (CPV >= CSV) /*如果计数器达到预先设定的CSV，清零，OUT2输出一个高电平*/
 				{
 					OUT2 = 1;
@@ -1176,7 +1206,7 @@ void ButtonMapping(void)
 	/*软件初始化*/
 	else if (KEY == ULOC && KeyEnterFlag ==0&&ModeButton.PressTimer >= ModeButton.LongTime && ModeButton.Status == Press &&UpButton.Effect == PressLong && UpButton.Status == Press && DownButton.Effect == PressLong && DownButton.Status == Press)
 	{
-		KeyEnterFlag = 1;
+		KeyEnterFlag = 2;
 		takeoffLED();
 		if ((ReadButtonStatus(&ModeButton)) == Press && (ReadButtonStatus(&UpButton) == Press) && (ReadButtonStatus(&DownButton) == Press))
 		{
@@ -1184,7 +1214,7 @@ void ButtonMapping(void)
 			if ((ReadButtonStatus(&ModeButton)) == Press && (ReadButtonStatus(&UpButton) == Press) && (ReadButtonStatus(&DownButton) == Press))
 			{
 				ButtonMappingDisplay(2);
-				testflag = 3;
+				//testflag = 3;
 			}
 		}
 
@@ -1201,16 +1231,25 @@ void ButtonMapping(void)
 	/*计算器清零*/
 	else if (KEY == ULOC && KeyEnterFlag ==0&&ModeButton.PressTimer >= ModeButton.LongTime && ModeButton.Status == Press && UpButton.Effect == PressLong && UpButton.Status == Press &&DownButton.Status == Release )
 	{
-		KeyEnterFlag = 1;
-		CPV = 0;
+		KeyEnterFlag = 3;
+		if(DisplayCPVModeNo == 0)
+		{
+			CPV = 0;
+			ModeButton.PressCounter = 1;
+		}
+		else if (DisplayCPVModeNo == 1)
+		{
+			TotalCPV = 0;
+			ModeButton.PressCounter = 0;
+		}
 		if (ModeButton.Effect == PressLong && ModeButton.Status == Press && UpButton.Effect == PressLong && UpButton.Status == Press &&DownButton.Status == Release )
 		{
 			ButtonMappingDisplay(3);
-			testflag = 4;
+			//testflag = 4;
 		}
 		//ModeButton.Effect = PressNOEffect;
 		ModeButton.PressTimer = 0;
-		ModeButton.PressCounter = 0;
+		
 		UpButton.PressCounter = 0;
 		//UpButton.Effect = PressNOEffect;
 		Test_Delay(1000);
@@ -1219,6 +1258,13 @@ void ButtonMapping(void)
 	{
 		KeyEnterFlag = 0;
 	}
+	
+	if(KeyEnterFlag==1) 
+		ButtonMappingDisplay(1);
+	else if(KeyEnterFlag==2)  
+		ButtonMappingDisplay(2);
+	else if(KeyEnterFlag==3)  
+		ButtonMappingDisplay(3);
 }
 
 void Test_Delay(uint32_t ms)
@@ -1280,7 +1326,7 @@ void GetEEPROM(void)
 ****************************/
 void ResetParameter(void)
 {
-	SV = 900;
+
 	Threshold = 1000;
 	KEY = ULOC;
 	OUT1_Mode.DelayMode = TOFF;

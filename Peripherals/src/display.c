@@ -344,13 +344,12 @@ void SMG_DisplayModeTWO(int16_t RegisterB)
 }
 
 /*显示模式3*/
-void SMG_DisplayModeTHIRD(int16_t CPV_counter)
+void SMG_DisplayModeTHIRD(int32_t CPV_counter)
 { 
 		uint8_t k_CPV_counter;
 		
 		k_CPV_counter = GetIntNumber(CPV_counter);
 	
-		
 		SMG_data_Decode_table[0][0]=data_SMG_seg_table[CPV_counter%10];							//D1
 		if(k_CPV_counter>=2)
 			SMG_data_Decode_table[0][1]=data_SMG_seg_table[(CPV_counter/10)%10];				//D2
@@ -364,11 +363,51 @@ void SMG_DisplayModeTHIRD(int16_t CPV_counter)
 			SMG_data_Decode_table[0][3]=data_SMG_seg_table[(CPV_counter/1000)%10];			//D4
 		else
 			SMG_data_Decode_table[0][3]=data_SMG_seg_table[22];										//none
-
-		SMG_data_Decode_table[0][4]=data_SMG_seg_table[22];										//none
-		SMG_data_Decode_table[0][5]=data_SMG_seg_table[19];													//D6	v
-		SMG_data_Decode_table[0][6]=data_SMG_seg_table[24];													//D7	p
+		if(k_CPV_counter>=5)
+			SMG_data_Decode_table[0][4]=data_SMG_seg_table[(CPV_counter/10000)%10];			//D5
+		else
+			SMG_data_Decode_table[0][4]=data_SMG_seg_table[22];										//none
+		if(k_CPV_counter>=6)
+			SMG_data_Decode_table[0][5]=data_SMG_seg_table[(CPV_counter/100000)%10];			//D6
+		else
+			SMG_data_Decode_table[0][5]=data_SMG_seg_table[22];										//none
+		
+		SMG_data_Decode_table[0][6]=data_SMG_seg_table[19];													//D7	V
 		SMG_data_Decode_table[0][7]=data_SMG_seg_table[12];													//D8	C
+}
+
+/*显示模式4*/
+void SMG_DisplayModeTotalCPV(int16_t TotalCPV_counter)
+{ 
+		uint32_t k_CPV_counter;
+		
+		k_CPV_counter = GetIntNumber(TotalCPV_counter);
+	
+		
+		SMG_data_Decode_table[0][0]=data_SMG_seg_table[TotalCPV_counter%10];							//D1
+		if(k_CPV_counter>=2)
+			SMG_data_Decode_table[0][1]=data_SMG_seg_table[(TotalCPV_counter/10)%10];				//D2
+		else
+			SMG_data_Decode_table[0][1]=data_SMG_seg_table[22];										//none
+		if(k_CPV_counter>=3)
+			SMG_data_Decode_table[0][2]=data_SMG_seg_table[(TotalCPV_counter/100)%10];				//D3
+		else
+			SMG_data_Decode_table[0][2]=data_SMG_seg_table[22];										//none
+		if(k_CPV_counter>=4)
+			SMG_data_Decode_table[0][3]=data_SMG_seg_table[(TotalCPV_counter/1000)%10];			//D4
+		else
+			SMG_data_Decode_table[0][3]=data_SMG_seg_table[22];										//none
+		if(k_CPV_counter>=5)
+			SMG_data_Decode_table[0][4]=data_SMG_seg_table[(TotalCPV_counter/10000)%10];			//D5
+		else
+			SMG_data_Decode_table[0][4]=data_SMG_seg_table[22];										//none
+		if(k_CPV_counter>=6)
+			SMG_data_Decode_table[0][5]=data_SMG_seg_table[(TotalCPV_counter/100000)%10];			//D6
+		else
+			SMG_data_Decode_table[0][5]=data_SMG_seg_table[22];										//none		
+		
+		SMG_data_Decode_table[0][6]=data_SMG_seg_table[12];													//D7	c
+		SMG_data_Decode_table[0][7]=data_SMG_seg_table[21];													//D8	t
 }
 
 /*显示模式DETECT*/
@@ -396,35 +435,35 @@ void SMG_DisplayModeDETECT(int16_t DETECT)
 		
 }
 
-/*功能菜单-SV*/
-void SMG_DisplaSV(uint32_t SV_counter)
-{ 
-		uint8_t k_CSV_counter;
-		
-		k_CSV_counter = GetIntNumber(SV_counter);
-	
-		SMG_data_Decode_table[0][0]=data_SMG_seg_table[SV_counter%10];						//D1
-	if(k_CSV_counter>=2)
-		SMG_data_Decode_table[0][1]=data_SMG_seg_table[(SV_counter/10)%10];			//D2
-	else
-			SMG_data_Decode_table[0][1]=data_SMG_seg_table[22];										//none
-	if(k_CSV_counter>=3)
-		SMG_data_Decode_table[0][2]=data_SMG_seg_table[(SV_counter/100)%10];			//D3
-	else
-			SMG_data_Decode_table[0][2]=data_SMG_seg_table[22];										//none
-	if(k_CSV_counter>=4)
-		SMG_data_Decode_table[0][3]=data_SMG_seg_table[(SV_counter/1000)%10];		//D4
-	else
-			SMG_data_Decode_table[0][3]=data_SMG_seg_table[22];										//none
-	if(k_CSV_counter>=5)
-		SMG_data_Decode_table[0][4]=data_SMG_seg_table[(SV_counter/10000)%10];		//D5
-	else
-			SMG_data_Decode_table[0][4]=data_SMG_seg_table[22];										//none
+///*功能菜单-SV*/
+//void SMG_DisplaSV(uint32_t SV_counter)
+//{ 
+//		uint8_t k_CSV_counter;
+//		
+//		k_CSV_counter = GetIntNumber(SV_counter);
+//	
+//		SMG_data_Decode_table[0][0]=data_SMG_seg_table[SV_counter%10];						//D1
+//	if(k_CSV_counter>=2)
+//		SMG_data_Decode_table[0][1]=data_SMG_seg_table[(SV_counter/10)%10];			//D2
+//	else
+//			SMG_data_Decode_table[0][1]=data_SMG_seg_table[22];										//none
+//	if(k_CSV_counter>=3)
+//		SMG_data_Decode_table[0][2]=data_SMG_seg_table[(SV_counter/100)%10];			//D3
+//	else
+//			SMG_data_Decode_table[0][2]=data_SMG_seg_table[22];										//none
+//	if(k_CSV_counter>=4)
+//		SMG_data_Decode_table[0][3]=data_SMG_seg_table[(SV_counter/1000)%10];		//D4
+//	else
+//			SMG_data_Decode_table[0][3]=data_SMG_seg_table[22];										//none
+//	if(k_CSV_counter>=5)
+//		SMG_data_Decode_table[0][4]=data_SMG_seg_table[(SV_counter/10000)%10];		//D5
+//	else
+//			SMG_data_Decode_table[0][4]=data_SMG_seg_table[22];										//none
 
-		SMG_data_Decode_table[0][5]=data_SMG_seg_table[19];												//D6	v
-		SMG_data_Decode_table[0][6]=data_SMG_seg_table[20];												//D7	s
-		SMG_data_Decode_table[0][7]=data_SMG_seg_table[22];												//D8	none
-}
+//		SMG_data_Decode_table[0][5]=data_SMG_seg_table[19];												//D6	v
+//		SMG_data_Decode_table[0][6]=data_SMG_seg_table[20];												//D7	s
+//		SMG_data_Decode_table[0][7]=data_SMG_seg_table[22];												//D8	none
+//}
 
 /*功能菜单-CSV*/
 void SMG_DisplaCSV(uint32_t CSV_counter)
@@ -450,10 +489,13 @@ void SMG_DisplaCSV(uint32_t CSV_counter)
 		SMG_data_Decode_table[0][4]=data_SMG_seg_table[(CSV_counter/10000)%10];		//D5
 	else
 			SMG_data_Decode_table[0][4]=data_SMG_seg_table[22];										//none
-
-		SMG_data_Decode_table[0][5]=data_SMG_seg_table[19];												//D6	v
-		SMG_data_Decode_table[0][6]=data_SMG_seg_table[20];												//D7	s
-		SMG_data_Decode_table[0][7]=data_SMG_seg_table[12];												//D8	C
+	if(k_CSV_counter>=6)
+		SMG_data_Decode_table[0][5]=data_SMG_seg_table[(CSV_counter/100000)%10];		//D6
+	else
+			SMG_data_Decode_table[0][5]=data_SMG_seg_table[22];										//none
+	
+		SMG_data_Decode_table[0][6]=data_SMG_seg_table[19];												//D7	V
+		SMG_data_Decode_table[0][7]=data_SMG_seg_table[20];												//D8	S
 }
 
 /*功能菜单-FSV*/
