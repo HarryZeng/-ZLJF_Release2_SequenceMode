@@ -1405,7 +1405,7 @@ void MenuTwo_OUT1_SHOT(void)
 void MenuTwo_DEL(void)
 {
 		static uint8_t lastCounter;
-		GPIOA->BRR = 0x00080;
+		//GPIOA->BRR = 0x00080;
 		SMG_DisplayMenuTwo_DEL_SET(DEL,0);
 			
 	/*Up Button*/

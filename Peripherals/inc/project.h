@@ -63,8 +63,12 @@
 #define OUT2_Pin 											GPIO_Pin_8
 #define OUT2_GPIO_Port 								GPIOA
 
-#define COMP_OUT1_Pin 								GPIO_Pin_2
-#define COMP_OUT1_GPIO_Port 					GPIOA
+#define COMP_OUT1_Pin 																GPIO_Pin_2
+#define COMP_OUT1_GPIO_Port 													GPIOA
+#define COMP_OUT1_GPIO_PortSource 										GPIO_PortSourceGPIOA
+#define COMP_OUT1_GPIO_PinSource 											GPIO_PinSource2
+#define COMP_OUT1_GPIO_EXTI_Line 											EXTI_Line2
+#define COMP_OUT1_GPIO_EXTI_TriggerMode								EXTI_Trigger_Falling
 
 /*DAC*/
 #ifdef  DAC_OUT_Enable
@@ -76,8 +80,6 @@
 //#define ADCIN_2_Pin						GPIO_Pin_2
 //#define ADCIN_2_GPIO_Port			GPIOA
 
-
-	 
 #define ADVtimeFlag   		0x01
 #define ButtontimeFlag   	0x02 
 #define D4toD1timeFlag   	0x04

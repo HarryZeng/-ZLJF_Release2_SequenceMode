@@ -23,3 +23,4 @@
 ..\output\project.o: ..\Libraries\STM32F10x_StdPeriph_Driver\inc\stm32f10x_dac.h
 ..\output\project.o: ..\Libraries\STM32F10x_StdPeriph_Driver\inc\stm32f10x_adc.h
 ..\output\project.o: ..\Libraries\STM32F10x_StdPeriph_Driver\inc\stm32f10x_iwdg.h
+..\output\project.o: ..\Libraries\STM32F10x_StdPeriph_Driver\inc\stm32f10x_exti.h

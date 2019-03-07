@@ -122,7 +122,10 @@ void SMG_GPIO_INIT(void)
 
 void IO_GPIO_INIT(void)
 {
-		GPIO_InitTypeDef gpio_init_structure;  
+		GPIO_InitTypeDef gpio_init_structure; 
+		EXTI_InitTypeDef EXTI_InitStructure;
+		NVIC_InitTypeDef NVIC_InitStructure;
+	
     //??GPIO??  
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE); 
 		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);  
@@ -151,10 +154,21 @@ void IO_GPIO_INIT(void)
 
 		//COMP_OUT1_GPIO_Port
     gpio_init_structure.GPIO_Pin = COMP_OUT1_Pin;  
-    gpio_init_structure.GPIO_Mode = GPIO_Mode_IN_FLOATING;                                 
+    gpio_init_structure.GPIO_Mode = GPIO_Mode_IPU;                                 
     gpio_init_structure.GPIO_Speed = GPIO_Speed_2MHz;                                
 		GPIO_Init(COMP_OUT1_GPIO_Port, &gpio_init_structure);
-		
+		GPIO_EXTILineConfig(COMP_OUT1_GPIO_PortSource,COMP_OUT1_GPIO_PinSource);		
+		EXTI_InitStructure.EXTI_Line	=	COMP_OUT1_GPIO_EXTI_Line; 
+		EXTI_InitStructure.EXTI_Mode 	= EXTI_Mode_Interrupt;
+		EXTI_InitStructure.EXTI_Trigger = COMP_OUT1_GPIO_EXTI_TriggerMode;
+		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+		EXTI_Init(&EXTI_InitStructure);
+	  
+		NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn; 
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;  
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00; 
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;  
+		NVIC_Init(&NVIC_InitStructure); 
 		
 }
 

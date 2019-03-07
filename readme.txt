@@ -16,4 +16,8 @@ ZLJF Release2
 2018-11-14 Change to sequence Mode
 
 2018-11-15  fix OriginalADCValue as 1000
+
+2019-2-23  set 1us £¬one display   but not commit to github
+  
+
 */

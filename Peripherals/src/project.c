@@ -26,6 +26,9 @@
 #include "stm32f10x_dac.h"
 #include "stm32f10x_adc.h"
 #include "stm32f10x_iwdg.h"
+#include "stm32f10x_exti.h"
+#include "misc.h"
+
 /*DSP库宏定义：ARM_MATH_CM0*/
 
 uint32_t DealyBaseTime = 8;
@@ -395,9 +398,10 @@ uint8_t REGISTER_AI_1 = 0;
 void SetRegisterAandOUT(void)
 {
 		uint8_t k=0;
-		uint8_t Counter=15;
+		uint8_t Counter = 1;  //2019-2-27->set 3
 		REGISTER_AI_1 = 0;
 		REGISTER_AI_0= 0;
+		GPIOA->BSRR = 0x0080;
 		for(k=0;k<=Counter;k++,REGISTER_AI_0++,REGISTER_AI_1++)
 		{		
 			if (GPIO_ReadInputDataBit(COMP_OUT1_GPIO_Port, COMP_OUT1_Pin)) //运放为高，没物体通过
@@ -421,13 +425,17 @@ void SetRegisterAandOUT(void)
 				}
 			}
 		}
+		GPIOA->BRR = 0x00080;
+}
 
-			/*设置OUT1的状态*/
-			SetOUT1Status();
-			/*OUT2输出*/
-			SetOUT2Status();
-			/*显示OUT1和OUT2的状态*/
-			SMG_DisplayOUT_STATUS(OUT1, OUT2);	
+
+void EXTI2_IRQHandler(void)
+{
+	if(EXTI_GetITStatus(EXTI_Line2)!=RESET) 
+	{
+		SetRegisterAandOUT();
+		EXTI_ClearITPendingBit(EXTI_Line2); 
+	}
 }
 
 /*主要的处理函数*/
@@ -435,12 +443,13 @@ uint32_t timenum;
 extern uint32_t KeytempPress;
 uint16_t DAC_OUTput=0;
 uint8_t CPV_DispalyFlag = 0;
+int16_t RegisterA_clearTime = 0;
 void Main_Function(void)
 {
 	GetEEPROM();
 	
 	//DACOriginalValue = Get_Adc_Average(ADC_Channel_3,8);
-	DACOriginalValue = 1000;
+	DACOriginalValue = 950;
 	DACOUT1 = DACOriginalValue + DEL;
 	DAC_SetChannel1Data(DAC_Align_12b_R, (uint16_t)DACOUT1);
 	
@@ -452,9 +461,15 @@ void Main_Function(void)
 			//GPIOA->BSRR = 0x0080;
 			/**************************************/
 			/*判断RegisterA 和 输出 OUT*/
-			SetRegisterAandOUT();  //此函数运行时间消耗20us
+			//SetRegisterAandOUT();  //此函数运行时间消耗20us  // 2019-2-23 change to exti mode to check
 			/*等待10us*/
 			//delayus(10);
+						/*设置OUT1的状态*/
+			SetOUT1Status();
+			/*OUT2输出*/
+			SetOUT2Status();
+			/*显示OUT1和OUT2的状态*/
+			SMG_DisplayOUT_STATUS(OUT1, OUT2);	
 			
 			/**************************************/
 			/*正常显示模式*/
@@ -473,6 +488,16 @@ void Main_Function(void)
 			//delayus(8);
 			/**************************************/
 			//以上从while(1)开始，运行时间消耗40us
+			if(RegisterA ==1)
+			{
+				if(timenum % 2 == 0)						
+					RegisterA_clearTime++;
+				if(RegisterA_clearTime>=5)  //5*40 =  200us 
+				{
+					RegisterA = 0;
+					RegisterA_clearTime = 0;
+				}
+			}
 			if(timenum % 3 == 0)						// 120/40 = 3  120us
 			{
 				OUT1_Mode.DelayCounter++;
@@ -513,19 +538,21 @@ void DisplayMODE(void)
 		{
 			if((KEY == LOC &&ModeButton.Status == Release && DownButton.Status == Release && UpButton.Status == Release)||KEY==ULOC)
 			{
-				/***************选择*****************/
-				if (ModeButton.PressCounter == 0)
-				{
-					DisplayCPVModeNo = 0;
-				}
-				else if (ModeButton.Effect == PressShort && ModeButton.PressCounter == 1 && DownButton.Status == Release && UpButton.Status == Release)
-				{
-					DisplayCPVModeNo = 1;
-				}
-				else if (ModeButton.Effect == PressShort && ModeButton.PressCounter == 2 && DownButton.Status == Release && UpButton.Status == Release ) //if need to display Mode_Four,PressCounter=4
-				{
-					ModeButton.PressCounter = 0;
-				}				
+				/***************选择***********
+				2019-2-23 origin versin
+				******************************/
+//				if (ModeButton.PressCounter == 0)
+//				{
+//					DisplayCPVModeNo = 0;
+//				}
+//				else if (ModeButton.Effect == PressShort && ModeButton.PressCounter == 1 && DownButton.Status == Release && UpButton.Status == Release)
+//				{
+//					DisplayCPVModeNo = 1;
+//				}
+//				else if (ModeButton.Effect == PressShort && ModeButton.PressCounter == 2 && DownButton.Status == Release && UpButton.Status == Release ) //if need to display Mode_Four,PressCounter=4
+//				{
+//					ModeButton.PressCounter = 0;
+//				}				
 				/*****************显示****************/
 				if(DisplayCPVModeNo==0)
 				{
